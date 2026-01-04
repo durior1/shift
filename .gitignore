@@ -1,0 +1,21 @@
+# Visual Studio / editor
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment
+.env
+
+# Build / distribution
+dist/
+build/
+
+# System
+.DS_Store
+*.log
