@@ -46,40 +46,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedEl.value = original;
     undoBtn.dataset.undoId = data.undoId;
 
-    // helper to translate a single character per your algorithm
-    function translateChar(c) {
+    // language detection: count chars unique to each mapping
+    function detectLanguage(text, eng, heb) {
+      if (!eng || !heb) return 'en';
+      let engCount = 0;
+      let hebCount = 0;
+      for (const ch of text) {
+        const inEng = eng.charToCode && eng.charToCode[ch];
+        const inHeb = heb.charToCode && heb.charToCode[ch];
+        if (inHeb && !inEng) hebCount++;
+        else if (inEng && !inHeb) engCount++;
+      }
+      return hebCount > engCount ? 'he' : 'en';
+    }
+
+    // translate a single char in a given direction
+    function translateCharDirection(c, fromLang) {
       if (!eng || !heb) return c;
-
-      // try english -> hebrew
-      const engCode = eng.charToCode && eng.charToCode[c];
-      if (engCode) {
-        const mapped = heb.codeToChar && heb.codeToChar[engCode];
-        if (mapped !== undefined && mapped !== null) return mapped;
+      if (fromLang === 'en') {
+        const engCode = eng.charToCode && eng.charToCode[c];
+        if (engCode) {
+          const mapped = heb.codeToChar && heb.codeToChar[engCode];
+          if (mapped !== undefined && mapped !== null) return mapped;
+        }
+        return c;
+      } else {
+        const hebCode = heb.charToCode && heb.charToCode[c];
+        if (hebCode) {
+          const mapped = eng.codeToChar && eng.codeToChar[hebCode];
+          if (mapped !== undefined && mapped !== null) return mapped;
+        }
+        return c;
       }
-
-      // try hebrew -> english
-      const hebCode = heb.charToCode && heb.charToCode[c];
-      if (hebCode) {
-        const mapped = eng.codeToChar && eng.codeToChar[hebCode];
-        if (mapped !== undefined && mapped !== null) return mapped;
-      }
-
-      return c;
     }
 
     // preserve simple uppercase for Latin letters: map lower then uppercase result if needed
-    function translatePreserveCase(ch) {
+    function translatePreserveCase(ch, fromLang) {
       if (!ch) return ch;
       const isUpper = ch.toLowerCase() !== ch && ch.toUpperCase() === ch;
       const base = isUpper ? ch.toLowerCase() : ch;
-      const out = translateChar(base);
+      const out = translateCharDirection(base, fromLang);
       if (isUpper && typeof out === 'string' && out.length === 1 && /[a-z]/i.test(out)) return out.toUpperCase();
       return out;
     }
 
+    const fromLang = detectLanguage(original, eng, heb);
     let shifted = '';
     for (const ch of original) {
-      shifted += translatePreserveCase(ch);
+      shifted += translatePreserveCase(ch, fromLang);
     }
 
     shiftedEl.value = shifted;
