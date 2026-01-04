@@ -25,4 +25,11 @@
       "matches": ["<all_urls>"]
     }
   ]
+  ,
+  "icons": {
+    "16": "shift16.png",
+    "32": "shift32.png",
+    "48": "shift48.png",
+    "128": "shift128.png"
+  }
 }
