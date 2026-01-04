@@ -22,7 +22,7 @@
     "KeyT": "א",
     "KeyU": "ו",
     "KeyV": "ה",
-    "KeyW": "w",
+    "KeyW": "'",
     "KeyX": "ס",
     "KeyY": "ט",
     "KeyZ": "ז",
@@ -48,11 +48,11 @@
     "BracketRight": "]",
     "Backslash": "\\",
     "Semicolon": "ף",
-    "Quote": "\"",
+    "Quote": ",",
     "Comma": "ת",
     "Period": "ץ",
-    "Slash": "/",
-    "Backquote": "`"
+    "Slash": ".",
+    "Backquote": ";"
   },
   "charToCode": {
     "ש": "KeyA",
@@ -102,9 +102,10 @@
     "]": "BracketRight",
     "\\": "Backslash",
     "ף": "Semicolon",
-    "\"": "Quote",
+    ",": "Quote",
     "ת": "Comma",
     "ץ": "Period",
+    ".": "Slash",
     "`": "Backquote"
   }
 }
