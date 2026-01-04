@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "shift",
+  "name": "Shift - Fix Hebrew/English keyboard mistakes",
   "version": "0.1",
-  "description": "Map and transform selected text when tapping Shift.",
-  "permissions": ["storage", "tabs", "scripting", "activeTab"],
+  "description": "Text came out in the wrong keyboard layout? Select it, tap <shift> and we'll fix it!\nהקלדתם במקלדת הלא נכונה? סמנו את הטקסט, הקישו Shift ונתקן את זה!",
+  "permissions": ["storage", "activeTab"],
   "background": {
     "service_worker": "background.js"
   },
