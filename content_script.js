@@ -43,12 +43,18 @@
       el.setAttribute('data-shift-undo-id', id);
       undoStore.set(id, {type: 'input', original, start, end});
 
-      chrome.runtime.sendMessage({
-        type: 'shift_selection',
-        text,
-        undoId: id,
-        info: {type: 'input', start, end}
-      });
+      try {
+        chrome.runtime.sendMessage({
+          type: 'shift_selection',
+          text,
+          undoId: id,
+          info: {type: 'input', start, end}
+        });
+      } catch (err) {
+        console.warn('Failed to send shift_selection message (extension context may be invalidated)', err);
+        el.removeAttribute('data-shift-undo-id');
+        undoStore.delete(id);
+      }
     } else {
       const el = editable;
       const originalHTML = el.innerHTML;
@@ -61,12 +67,18 @@
       el.setAttribute('data-shift-undo-id', id);
       undoStore.set(id, {type: 'content', originalHTML, start, end});
 
-      chrome.runtime.sendMessage({
-        type: 'shift_selection',
-        text,
-        undoId: id,
-        info: {type: 'content', start, end}
-      });
+      try {
+        chrome.runtime.sendMessage({
+          type: 'shift_selection',
+          text,
+          undoId: id,
+          info: {type: 'content', start, end}
+        });
+      } catch (err) {
+        console.warn('Failed to send shift_selection message (extension context may be invalidated)', err);
+        el.removeAttribute('data-shift-undo-id');
+        undoStore.delete(id);
+      }
     }
   }
 
