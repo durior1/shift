@@ -205,6 +205,7 @@
 
       // replace selection range using Range API
       try {
+        //console.log('Replacing selection with Range API');
         const range = sel.getRangeAt(0);
         range.deleteContents();
         const node = document.createTextNode(shifted);
@@ -215,7 +216,19 @@
         newRange.setStart(node, 0);
         newRange.setEnd(node, shifted.length);
         sel.addRange(newRange);
+
+        // CRITICAL: notify React (e.g. WhatsApp)
+        el.dispatchEvent(
+          new InputEvent("input", {
+            bubbles: true,
+            cancelable: true,
+            inputType: "insertText",
+            data: shifted
+          })
+        );
+
       } catch (e) {
+        //console.warn('Failed to replace selection using Range API', e);
         // fallback: replace innerHTML (less safe)
         el.innerHTML = el.innerHTML.split(text).join(shifted);
       }
