@@ -13,6 +13,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
   };
 
   chrome.storage.local.set({[key]: payload}, () => {
+    return; // disabling popup
     try {
       if (chrome.action && chrome.action.openPopup) {
         chrome.action.openPopup();
