@@ -12,27 +12,28 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     time: Date.now()
   };
 
-  chrome.storage.local.set({[key]: payload}, () => {
-    return; // disabling popup
-    try {
-      if (chrome.action && chrome.action.openPopup) {
-        chrome.action.openPopup();
-      }
-    } catch (err) {
-      console.warn('Could not open popup automatically', err);
-    }
-  });
+  //TODO restore undo functionality, but without storage
+  // chrome.storage.local.set({[key]: payload}, () => {
+  //   return; // disabling popup
+  //   try {
+  //     if (chrome.action && chrome.action.openPopup) {
+  //       chrome.action.openPopup();
+  //     }
+  //   } catch (err) {
+  //     console.warn('Could not open popup automatically', err);
+  //   }
+  // });
 });
 
 // Provide the stored selection to the popup when requested
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message) return;
-  if (message.type === 'get_shift_selection') {
-    const tabId = message.tabId;
-    const key = 'shift_selection_' + tabId;
-    chrome.storage.local.get(key, (items) => {
-      sendResponse(items[key] || null);
-    });
-    return true; // indicate async response
-  }
-});
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (!message) return;
+//   if (message.type === 'get_shift_selection') {
+//     const tabId = message.tabId;
+//     const key = 'shift_selection_' + tabId;
+//     chrome.storage.local.get(key, (items) => {
+//       sendResponse(items[key] || null);
+//     });
+//     return true; // indicate async response
+//   }
+// });
