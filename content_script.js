@@ -123,10 +123,23 @@
       let shifted = '';
       for (const ch of text) shifted += translatePreserveCase(ch, fromLang);
 
-      // apply replacement in input/textarea
-      const newVal = original.slice(0, start) + shifted + original.slice(end);
-      el.value = newVal;
-      try { el.setSelectionRange(start, start + shifted.length); } catch (e) {}
+      // Modern, React-safe replacement for input/textarea
+      el.setRangeText(
+        shifted,
+        start,
+        end,
+        "select" // selects the inserted text
+      );
+
+      // Notify React / frameworks
+      el.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          cancelable: true,
+          inputType: "insertReplacementText",
+          data: shifted
+        })
+      );
 
       // mark applied and store shifted text for toggling
       const stored = undoStore.get(id);
