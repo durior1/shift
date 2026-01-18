@@ -140,23 +140,36 @@
     }
 
     function translatePreserveCase(ch, fromLang) {
-      if (!ch) return ch;
-      const isUpper = ch.toLowerCase() !== ch && ch.toUpperCase() === ch;
-      const base = isUpper ? ch.toLowerCase() : ch;
-      const out = translateCharDirection(base, fromLang);
-      if (
-        isUpper &&
-        typeof out === "string" &&
-        out.length === 1 &&
-        /[a-z]/i.test(out)
-      )
-        return out.toUpperCase();
-      return out;
+      // If the character is uppercase, do NOT translate it
+      if (ch !== ch.toLowerCase()) {
+        return ch;
+      }
+
+      // Only translate lowercase characters that exist in the mapping
+      const mapped = translateCharDirection(ch, fromLang);
+
+      // If not mapped, return original
+      if (mapped === undefined || mapped === null) {
+        return ch;
+      }
+
+      return mapped;
     }
 
     const fromLang = detectLanguage(text, eng, heb);
+
     let shifted = "";
-    for (const ch of text) shifted += translatePreserveCase(ch, fromLang);
+
+    for (const ch of text) {
+      const mapped = translatePreserveCase(ch, fromLang);
+
+      // If the character is not in the mapping → keep it unchanged
+      if (mapped === undefined || mapped === null) {
+        shifted += ch;
+      } else {
+        shifted += mapped;
+      }
+    }
 
     //
     // ============================

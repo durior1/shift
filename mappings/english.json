@@ -38,10 +38,6 @@
     "Digit8": "8",
     "Digit9": "9",
 
-    "Space": " ",
-    "Enter": "\n",
-    "Tab": "\t",
-
     "Minus": "-",
     "Equal": "=",
     "BracketLeft": "[",
@@ -92,10 +88,6 @@
     "7": "Digit7",
     "8": "Digit8",
     "9": "Digit9",
-
-    " ": "Space",
-    "\n": "Enter",
-    "\t": "Tab",
 
     "-": "Minus",
     "=": "Equal",
