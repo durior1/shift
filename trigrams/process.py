@@ -29,7 +29,15 @@ def map_trigram(trigrams_in, map):
 tri_eng = map_trigram(trigrams_in=tri_in["eng"], map=map_en)
 tri_heb = map_trigram(trigrams_in=tri_in["heb"], map=map_he)
 
-# todo we need both char and code mappings for trigrams
+out_eng = {
+    "chars": tri_in["eng"],
+    "codes": tri_eng,
+}
+
+out_heb = {
+    "chars": tri_in["heb"],
+    "codes": tri_heb,
+}
 
 
 def convert(obj):
@@ -39,6 +47,6 @@ def convert(obj):
 
 
 with open("../trigrams/english.json", mode="w", encoding="utf-8") as eng_file:
-    json.dump(tri_eng, eng_file, default=convert, ensure_ascii=False, indent=2)
+    json.dump(out_eng, eng_file, default=convert, ensure_ascii=False, indent=2)
 with open("../trigrams/hebrew.json", mode="w", encoding="utf-8") as heb_file:
-    json.dump(tri_heb, heb_file, default=convert, ensure_ascii=False, indent=2)
+    json.dump(out_heb, heb_file, default=convert, ensure_ascii=False, indent=2)
