@@ -282,25 +282,4 @@
       otherKeyPressed = false;
     }
   }, true);
-
-  // react to commands from popup/background (undo/apply)
-  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (!msg || !msg.type) return;
-    if (msg.type === 'shift_undo') {
-      const id = msg.undoId;
-      const data = undoStore.get(id);
-      if (!data) return;
-      if (data.type === 'input') {
-        // find element with matching attribute
-        const el = document.querySelector('[data-shift-undo-id="' + id + '"]');
-        if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
-          el.value = data.original;
-        }
-      } else if (data.type === 'content') {
-        const el = document.querySelector('[data-shift-undo-id="' + id + '"]');
-        if (el) el.innerHTML = data.originalHTML;
-      }
-      undoStore.delete(id);
-    }
-  });
 })();

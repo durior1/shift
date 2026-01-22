@@ -6,10 +6,6 @@
   "background": {
     "service_worker": "background.js"
   },
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "shift"
-  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
