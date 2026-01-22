@@ -45,9 +45,8 @@
     const text = sel.toString();
     if (!text) return;
 
-    const anchorNode = sel.anchorNode;
     const editable =
-      nearestEditable(anchorNode) ||
+      nearestEditable(sel.anchorNode) ||
       (document.activeElement &&
       (document.activeElement.tagName === "INPUT" ||
         document.activeElement.tagName === "TEXTAREA")
