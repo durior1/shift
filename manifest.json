@@ -3,9 +3,6 @@
   "name": "Shift: Fix Hebrew/English keyboard mistakes",
   "version": "1.0.2",
   "description": "Typing English, getting Hebrish (Eמעךןדי)? Select, type <shift>, FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, הקישו שיפט ונתקן",
-  "background": {
-    "service_worker": "background.js"
-  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
