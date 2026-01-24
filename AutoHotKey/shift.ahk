@@ -212,15 +212,12 @@ EnsureLayout(target) {
 ; Type characters using the correct layout (no restore)
 ; ---------------------------------------------------------
 TypeWithLayout(str, targetLayout) {
+    OutputDebug("Typing with layout: " . Format("0x{:04X}", targetLayout))
     EnsureLayout(targetLayout)
 
-    for ch in StrSplit(str, "") {
-        if EngCharToCode.Has(ch) {
-            Send "{" EngCharToCode[ch] "}"
-        } else {
-            Send ch
-        }
-    }
+    OutputDebug("Typing string: " . str)
+    for ch in StrSplit(str, "")
+        Send ch
 }
 
 ; ---------------------------------------------------------
@@ -250,6 +247,7 @@ HandleShiftTap() {
 
     lang := DetectLanguage(text)
     shifted := TranslateText(text, lang)
+    OutputDebug("Translated text in " . lang . ": " . shifted)
 
     if (lang = "en")
         TypeWithLayout(shifted, 0x040D) ; Hebrew
