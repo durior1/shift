@@ -221,34 +221,54 @@ TypeWithLayout(str, targetLayout) {
 }
 
 ; ---------------------------------------------------------
+; Helper: iterate from x to y with step k
+; ---------------------------------------------------------
+x_to_y_step_k(&i, x, y, k := 1) {
+    return (i := x + (a_index - 1)) <= y ? (a_index += k - 1, true) : (i -= k, false)
+}
+
+; ---------------------------------------------------------
 ; Main logic: copy → translate → type
 ; ---------------------------------------------------------
+global undoLength := 0
 HandleShiftTap() {
-    global undoActive, undoText
+    global undoActive, undoText, undoLength
 
     text := GetSelectedText()
     if (text = "")
         return
 
+    ; Undo toggle
     if (undoActive) {
-        ; Undo: type original text in correct layout
+        ; Select the previously typed text
+        i := 0
+        while x_to_y_step_k(&i, 1, undoLength)
+            Send "+{Left}"
+
+        ; Detect language of undo text
         lang := DetectLanguage(undoText)
+
+        ; Type undo text in correct layout
         if (lang = "en")
-            TypeWithLayout(undoText, 0x040D)
+            TypeWithLayout(undoText, 0x040D) ; Hebrew
         else
-            TypeWithLayout(undoText, 0x0409)
+            TypeWithLayout(undoText, 0x0409) ; English
 
         undoActive := false
         return
     }
 
+    ; Normal forward translation
     undoText := text
     undoActive := true
 
     lang := DetectLanguage(text)
     shifted := TranslateText(text, lang)
-    OutputDebug("Translated text in " . lang . ": " . shifted)
 
+    ; Store how many chars we typed so undo can select them
+    undoLength := StrLen(shifted)
+
+    ; Type translated text in correct layout
     if (lang = "en")
         TypeWithLayout(shifted, 0x040D) ; Hebrew
     else
