@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2
 #Include UIA.ahk
+; remember OutputDebug() for debugging
 
 ; ---------------------------------------------------------
 ; Global state
@@ -173,6 +174,7 @@ HandleShiftRelease() {
     if IsChromeFamily(exe)
         return
 
+    OutputDebug("Shift released. otherKey=" . otherKey . ", shiftTapHandled=" . shiftTapHandled)
     if (shiftDown && !otherKey && !shiftTapHandled) {
         shiftTapHandled := true
         HandleShiftTap()
@@ -182,10 +184,49 @@ HandleShiftRelease() {
 
 ~*:: {
     global shiftDown, otherKey
-    if (shiftDown && A_PriorKey != "Shift")
+    if (shiftDown) {
         otherKey := true
+        OutputDebug("Other key pressed while Shift is down: " . A_PriorKey)
+    }
 }
 
+~+End:: global otherKey := true
+~+Home:: global otherKey := true
+~+PgUp:: global otherKey := true
+~+PgDn:: global otherKey := true
+~+Left:: global otherKey := true
+~+Right:: global otherKey := true
+~+Up:: global otherKey := true
+~+Down:: global otherKey := true
+~+Delete:: global otherKey := true
+~+Insert:: global otherKey := true
+~+Backspace:: global otherKey := true
+~+Tab:: global otherKey := true
+~+Enter:: global otherKey := true
+~+F1:: global otherKey := true
+~+F2:: global otherKey := true
+~+F3:: global otherKey := true
+~+F4:: global otherKey := true
+~+F5:: global otherKey := true
+~+F6:: global otherKey := true
+~+F7:: global otherKey := true
+~+F8:: global otherKey := true
+~+F9:: global otherKey := true
+~+F10:: global otherKey := true
+~+F11:: global otherKey := true
+~+F12:: global otherKey := true
+~+Esc:: global otherKey := true
+~+Space:: global otherKey := true
+~+AppsKey:: global otherKey := true
+~+LWin:: global otherKey := true
+~+RWin:: global otherKey := true
+~+Ctrl:: global otherKey := true
+~+Alt:: global otherKey := true
+~+PrintScreen:: global otherKey := true
+~+ScrollLock:: global otherKey := true
+~+Pause:: global otherKey := true
+~+CapsLock:: global otherKey := true
+~+NumLock:: global otherKey := true
 ; ---------------------------------------------------------
 ; Keyboard layout helpers
 ; ---------------------------------------------------------
