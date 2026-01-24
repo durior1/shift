@@ -93,7 +93,6 @@ CopyViaCOM() {
 
     try {
         teams := ComObjActive("Teams.Application")
-        ; Teams selection unreliable → fallback
     }
     catch {
         return ""
@@ -125,30 +124,25 @@ CopyViaUIA() {
 GetSelectedText() {
     exe := GetActiveExe()
 
-    ; 1. Ignore Chrome completely
     if IsChromeFamily(exe)
         return ""
 
-    ; 2. Office apps → COM
     if IsOfficeApp(exe) {
         t := CopyViaCOM()
         if (t != "")
             return t
     }
 
-    ; 3. VSCode → Clipboard
     if IsVSCode(exe) {
         t := CopyViaClipboard()
         if (t != "")
             return t
     }
 
-    ; 4. UIA → TextPattern
     t := CopyViaUIA()
     if (t != "")
         return t
 
-    ; 5. Fallback → Clipboard
     return CopyViaClipboard()
 }
 
@@ -177,7 +171,7 @@ HandleShiftRelease() {
 
     exe := GetActiveExe()
     if IsChromeFamily(exe)
-        return  ; ignore everything in Chrome
+        return
 
     if (shiftDown && !otherKey && !shiftTapHandled) {
         shiftTapHandled := true
@@ -186,7 +180,6 @@ HandleShiftRelease() {
     shiftDown := false
 }
 
-; Detect ANY other key while Shift is held
 ~*:: {
     global shiftDown, otherKey
     if (shiftDown && A_PriorKey != "Shift")
@@ -194,7 +187,44 @@ HandleShiftRelease() {
 }
 
 ; ---------------------------------------------------------
-; Main logic: copy → translate → paste
+; Keyboard layout helpers
+; ---------------------------------------------------------
+GetKeyboardLayoutID() {
+    threadID := DllCall("GetWindowThreadProcessId", "ptr", WinGetID("A"), "uint*", 0, "uint")
+    layout := DllCall("GetKeyboardLayout", "uint", threadID, "ptr")
+    return layout & 0xFFFF
+}
+
+ToggleLayout() {
+    Send "# "
+    Sleep 80
+}
+
+EnsureLayout(target) {
+    attempts := 0
+    while (GetKeyboardLayoutID() != target && attempts < 5) {
+        ToggleLayout()
+        attempts++
+    }
+}
+
+; ---------------------------------------------------------
+; Type characters using the correct layout (no restore)
+; ---------------------------------------------------------
+TypeWithLayout(str, targetLayout) {
+    EnsureLayout(targetLayout)
+
+    for ch in StrSplit(str, "") {
+        if EngCharToCode.Has(ch) {
+            Send "{" EngCharToCode[ch] "}"
+        } else {
+            Send ch
+        }
+    }
+}
+
+; ---------------------------------------------------------
+; Main logic: copy → translate → type
 ; ---------------------------------------------------------
 HandleShiftTap() {
     global undoActive, undoText
@@ -203,10 +233,14 @@ HandleShiftTap() {
     if (text = "")
         return
 
-    ; Undo toggle
     if (undoActive) {
-        Clipboard := undoText
-        Send "^v"
+        ; Undo: type original text in correct layout
+        lang := DetectLanguage(undoText)
+        if (lang = "en")
+            TypeWithLayout(undoText, 0x040D)
+        else
+            TypeWithLayout(undoText, 0x0409)
+
         undoActive := false
         return
     }
@@ -214,15 +248,13 @@ HandleShiftTap() {
     undoText := text
     undoActive := true
 
-    ; Translate
     lang := DetectLanguage(text)
     shifted := TranslateText(text, lang)
 
-    ; Paste result
-    oldClip := Clipboard
-    Clipboard := shifted
-    Send "^v"
-    Clipboard := oldClip
+    if (lang = "en")
+        TypeWithLayout(shifted, 0x040D) ; Hebrew
+    else
+        TypeWithLayout(shifted, 0x0409) ; English
 }
 
 ; ---------------------------------------------------------
@@ -275,45 +307,45 @@ TranslateChar(ch, lang) {
 ; Mapping tables
 ; ---------------------------------------------------------
 EngCodeToChar := Map(
-    "KeyA","a","KeyB","b","KeyC","c","KeyD","d","KeyE","e","KeyF","f","KeyG","g","KeyH","h",
-    "KeyI","i","KeyJ","j","KeyK","k","KeyL","l","KeyM","m","KeyN","n","KeyO","o","KeyP","p",
-    "KeyQ","q","KeyR","r","KeyS","s","KeyT","t","KeyU","u","KeyV","v","KeyW","w","KeyX","x",
-    "KeyY","y","KeyZ","z",
-    "Digit0","0","Digit1","1","Digit2","2","Digit3","3","Digit4","4","Digit5","5","Digit6","6",
-    "Digit7","7","Digit8","8","Digit9","9",
-    "Minus","-","Equal","=","BracketLeft","[","BracketRight","]","Backslash","\\","Semicolon",";",
-    "Quote","'","Comma",",","Period",".","Slash","/","Backquote","``"
+    "KeyA", "a", "KeyB", "b", "KeyC", "c", "KeyD", "d", "KeyE", "e", "KeyF", "f", "KeyG", "g", "KeyH", "h",
+    "KeyI", "i", "KeyJ", "j", "KeyK", "k", "KeyL", "l", "KeyM", "m", "KeyN", "n", "KeyO", "o", "KeyP", "p",
+    "KeyQ", "q", "KeyR", "r", "KeyS", "s", "KeyT", "t", "KeyU", "u", "KeyV", "v", "KeyW", "w", "KeyX", "x",
+    "KeyY", "y", "KeyZ", "z",
+    "Digit0", "0", "Digit1", "1", "Digit2", "2", "Digit3", "3", "Digit4", "4", "Digit5", "5", "Digit6", "6",
+    "Digit7", "7", "Digit8", "8", "Digit9", "9",
+    "Minus", "-", "Equal", "=", "BracketLeft", "[", "BracketRight", "]", "Backslash", "\\", "Semicolon", ";",
+    "Quote", "'", "Comma", ",", "Period", ".", "Slash", "/", "Backquote", "``"
 )
 
 EngCharToCode := Map(
-    "a","KeyA","b","KeyB","c","KeyC","d","KeyD","e","KeyE","f","KeyF","g","KeyG","h","KeyH",
-    "i","KeyI","j","KeyJ","k","KeyK","l","KeyL","m","KeyM","n","KeyN","o","KeyO","p","KeyP",
-    "q","KeyQ","r","KeyR","s","KeyS","t","KeyT","u","KeyU","v","KeyV","w","KeyW","x","KeyX",
-    "y","KeyY","z","KeyZ",
-    "0","Digit0","1","Digit1","2","Digit2","3","Digit3","4","Digit4","5","Digit5","6","Digit6",
-    "7","Digit7","8","Digit8","9","Digit9",
-    "-","Minus","=","Equal","[","BracketLeft","]","BracketRight","\\","Backslash",";","Semicolon",
-    "'","Quote",",","Comma",".","Period","/","Slash","``","Backquote"
+    "a", "KeyA", "b", "KeyB", "c", "KeyC", "d", "KeyD", "e", "KeyE", "f", "KeyF", "g", "KeyG", "h", "KeyH",
+    "i", "KeyI", "j", "KeyJ", "k", "KeyK", "l", "KeyL", "m", "KeyM", "n", "KeyN", "o", "KeyO", "p", "KeyP",
+    "q", "KeyQ", "r", "KeyR", "s", "KeyS", "t", "KeyT", "u", "KeyU", "v", "KeyV", "w", "KeyW", "x", "KeyX",
+    "y", "KeyY", "z", "KeyZ",
+    "0", "Digit0", "1", "Digit1", "2", "Digit2", "3", "Digit3", "4", "Digit4", "5", "Digit5", "6", "Digit6",
+    "7", "Digit7", "8", "Digit8", "9", "Digit9",
+    "-", "Minus", "=", "Equal", "[", "BracketLeft", "]", "BracketRight", "\\", "Backslash", ";", "Semicolon",
+    "'", "Quote", ",", "Comma", ".", "Period", "/", "Slash", "``", "Backquote"
 )
 
 HebCodeToChar := Map(
-    "KeyA","ש","KeyB","נ","KeyC","ב","KeyD","ג","KeyE","ק","KeyF","כ","KeyG","ע","KeyH","י",
-    "KeyI","ן","KeyJ","ח","KeyK","ל","KeyL","ך","KeyM","צ","KeyN","מ","KeyO","ם","KeyP","פ",
-    "KeyQ","/","KeyR","ר","KeyS","ד","KeyT","א","KeyU","ו","KeyV","ה","KeyW","'","KeyX","ס",
-    "KeyY","ט","KeyZ","ז",
-    "Digit0","0","Digit1","1","Digit2","2","Digit3","3","Digit4","4","Digit5","5","Digit6","6",
-    "Digit7","7","Digit8","8","Digit9","9",
-    "Minus","-","Equal","=","BracketLeft","[","BracketRight","]","Backslash","\\","Semicolon","ף",
-    "Quote",",","Comma","ת","Period","ץ","Slash",".","Backquote",";"
+    "KeyA", "ש", "KeyB", "נ", "KeyC", "ב", "KeyD", "ג", "KeyE", "ק", "KeyF", "כ", "KeyG", "ע", "KeyH", "י",
+    "KeyI", "ן", "KeyJ", "ח", "KeyK", "ל", "KeyL", "ך", "KeyM", "צ", "KeyN", "מ", "KeyO", "ם", "KeyP", "פ",
+    "KeyQ", "/", "KeyR", "ר", "KeyS", "ד", "KeyT", "א", "KeyU", "ו", "KeyV", "ה", "KeyW", "'", "KeyX", "ס",
+    "KeyY", "ט", "KeyZ", "ז",
+    "Digit0", "0", "Digit1", "1", "Digit2", "2", "Digit3", "3", "Digit4", "4", "Digit5", "5", "Digit6", "6",
+    "Digit7", "7", "Digit8", "8", "Digit9", "9",
+    "Minus", "-", "Equal", "=", "BracketLeft", "[", "BracketRight", "]", "Backslash", "\\", "Semicolon", "ף",
+    "Quote", ",", "Comma", "ת", "Period", "ץ", "Slash", ".", "Backquote", ";"
 )
 
 HebCharToCode := Map(
-    "ש","KeyA","נ","KeyB","ב","KeyC","ג","KeyD","ק","KeyE","כ","KeyF","ע","KeyG","י","KeyH",
-    "ן","KeyI","ח","KeyJ","ל","KeyK","ך","KeyL","צ","KeyM","מ","KeyN","ם","KeyO","פ","KeyP",
-    "/","KeyQ","ר","KeyR","ד","KeyS","א","KeyT","ו","KeyU","ה","KeyV","'","KeyW","ס","KeyX",
-    "ט","KeyY","ז","KeyZ",
-    "0","Digit0","1","Digit1","2","Digit2","3","Digit3","4","Digit4","5","Digit5","6","Digit6",
-    "7","Digit7","8","Digit8","9","Digit9",
-    "-","Minus","=","Equal","[","BracketLeft","]","BracketRight","\\","Backslash","ף","Semicolon",
-    ",","Quote","ת","Comma","ץ","Period",".","Slash",";","Backquote"
+    "ש", "KeyA", "נ", "KeyB", "ב", "KeyC", "ג", "KeyD", "ק", "KeyE", "כ", "KeyF", "ע", "KeyG", "י", "KeyH",
+    "ן", "KeyI", "ח", "KeyJ", "ל", "KeyK", "ך", "KeyL", "צ", "KeyM", "מ", "KeyN", "ם", "KeyO", "פ", "KeyP",
+    "/", "KeyQ", "ר", "KeyR", "ד", "KeyS", "א", "KeyT", "ו", "KeyU", "ה", "KeyV", "'", "KeyW", "ס", "KeyX",
+    "ט", "KeyY", "ז", "KeyZ",
+    "0", "Digit0", "1", "Digit1", "2", "Digit2", "3", "Digit3", "4", "Digit4", "5", "Digit5", "6", "Digit6",
+    "7", "Digit7", "8", "Digit8", "9", "Digit9",
+    "-", "Minus", "=", "Equal", "[", "BracketLeft", "]", "BracketRight", "\\", "Backslash", "ף", "Semicolon",
+    ",", "Quote", "ת", "Comma", "ץ", "Period", ".", "Slash", ";", "Backquote"
 )
