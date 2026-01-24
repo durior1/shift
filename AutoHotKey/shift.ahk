@@ -62,7 +62,12 @@ CopyViaClipboard(timeoutMs := 1500) {
 CopyViaCOM() {
     try {
         word := ComObjActive("Word.Application")
-        return word.Selection.Text
+        sel := word.Selection
+
+        if (sel.Type != 2)  ; wdSelectionIP
+            return ""       ; no selection
+        else
+            return sel.Text
     }
     catch {
         return ""
