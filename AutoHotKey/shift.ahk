@@ -66,8 +66,15 @@ CopyViaCOM() {
 
         if (sel.Type != 2)  ; wdSelectionIP
             return ""       ; no selection
-        else
-            return sel.Text
+        else {
+            ;            OutputDebug("Word selection via COM: '" . sel.Text . "', length=" . StrLen(sel.Text) . " last=" . Ord(SubStr(sel.Text, -1)))
+            ; Trim trailing CR/LF
+            txt := sel.Text
+            if (SubStr(txt, -1) = "`n" || SubStr(txt, -1) = "`r")
+                txt := SubStr(txt, 1, -1)
+
+            return txt
+        }
     }
     catch {
         return ""
@@ -273,6 +280,11 @@ x_to_y_step_k(&i, x, y, k := 1) {
     return (i := x + (a_index - 1)) <= y ? (a_index += k - 1, true) : (i -= k, false)
 }
 
+SelectNChars(n) {
+    i := 0
+    while x_to_y_step_k(&i, 1, n)
+        Send "+{Left}"
+}
 ; ---------------------------------------------------------
 ; Main logic: copy → translate → type
 ; ---------------------------------------------------------
@@ -280,16 +292,17 @@ global undoLength := 0
 HandleShiftTap() {
     global undoActive, undoText, undoLength
 
+    OutputDebug("Handling Shift tap, undoActive=" . undoActive)
+
     text := GetSelectedText()
     if (text = "")
         return
 
     ; Undo toggle
     if (undoActive) {
+        OutputDebug("Performing undo of previous translation: '" . undoText . "' length=" . undoLength)
         ; Select the previously typed text
-        i := 0
-        while x_to_y_step_k(&i, 1, undoLength)
-            Send "+{Left}"
+        SelectNChars(undoLength)
 
         ; Detect language of undo text
         lang := DetectLanguage(undoText)
@@ -299,6 +312,9 @@ HandleShiftTap() {
             TypeWithLayout(undoText, 0x040D) ; Hebrew
         else
             TypeWithLayout(undoText, 0x0409) ; English
+
+        ; Reselect the undone text for potential redo
+        SelectNChars(undoLength)
 
         undoActive := false
         return
@@ -319,6 +335,9 @@ HandleShiftTap() {
         TypeWithLayout(shifted, 0x040D) ; Hebrew
     else
         TypeWithLayout(shifted, 0x0409) ; English
+
+    ; Reselect the undone text for potential redo
+    SelectNChars(undoLength)
 }
 
 ; ---------------------------------------------------------
