@@ -20,16 +20,21 @@ GetActiveExe() {
     return WinGetProcessName(hwnd)
 }
 
-IsChromeFamily(exe) {
-    return exe ~= "i)^(chrome|msedge|brave|opera).exe$"
-}
-
 IsVSCode(exe) {
     return exe ~= "i)^code(.exe)?$"
 }
 
 IsOfficeApp(exe) {
     return exe ~= "i)^(winword|excel|powerpnt|outlook|teams).exe$"
+}
+
+IsChromeFamily(exe) {
+    return exe ~= "i)^(chrome|msedge|brave|opera).exe$"
+}
+
+IsGoogleSuiteTab() {
+    title := WinGetTitle("A")
+    return title ~= "Google Docs|Google Sheets|Google Slides"
 }
 
 ; ---------------------------------------------------------
@@ -137,8 +142,8 @@ CopyViaUIA() {
 GetSelectedText() {
     exe := GetActiveExe()
 
-    if IsChromeFamily(exe)
-        return ""
+    ;    if IsChromeFamily(exe)
+    ;        return ""
 
     if IsOfficeApp(exe) {
         t := CopyViaCOM()
@@ -183,7 +188,7 @@ HandleShiftRelease() {
     global shiftDown, otherKey, shiftTapHandled
 
     exe := GetActiveExe()
-    if IsChromeFamily(exe)
+    if IsChromeFamily(exe) && !IsGoogleSuiteTab()
         return
 
     OutputDebug("Shift released. otherKey=" . otherKey . ", shiftTapHandled=" . shiftTapHandled)
@@ -295,8 +300,10 @@ HandleShiftTap() {
     OutputDebug("Handling Shift tap, undoActive=" . undoActive)
 
     text := GetSelectedText()
-    if (text = "")
+    if (text = "") {
+        OutputDebug("No text selected, aborting.")
         return
+    }
 
     ; Undo toggle
     if (undoActive) {
