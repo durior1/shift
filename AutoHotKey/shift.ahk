@@ -1,12 +1,12 @@
 #Requires AutoHotkey v2
 #Include UIA.ahk
-; remember OutputDebug() for debugging
 
 ; ---------------------------------------------------------
 ; Global state
 ; ---------------------------------------------------------
 global undoActive := false
 global undoText := ""
+global undoLength := 0
 
 global shiftDown := false
 global otherKey := false
@@ -69,15 +69,12 @@ CopyViaCOM() {
         word := ComObjActive("Word.Application")
         sel := word.Selection
 
-        if (sel.Type != 2)  ; wdSelectionIP
-            return ""       ; no selection
+        if (sel.Type != 2)
+            return ""
         else {
-            ;            OutputDebug("Word selection via COM: '" . sel.Text . "', length=" . StrLen(sel.Text) . " last=" . Ord(SubStr(sel.Text, -1)))
-            ; Trim trailing CR/LF
             txt := sel.Text
             if (SubStr(txt, -1) = "`n" || SubStr(txt, -1) = "`r")
                 txt := SubStr(txt, 1, -1)
-
             return txt
         }
     }
@@ -142,9 +139,6 @@ CopyViaUIA() {
 GetSelectedText() {
     exe := GetActiveExe()
 
-    ;    if IsChromeFamily(exe)
-    ;        return ""
-
     if IsOfficeApp(exe) {
         t := CopyViaCOM()
         if (t != "")
@@ -165,7 +159,7 @@ GetSelectedText() {
 }
 
 ; ---------------------------------------------------------
-; SHIFT TAP DETECTION (Chrome ignored)
+; SHIFT TAP DETECTION
 ; ---------------------------------------------------------
 ~LShift:: {
     global shiftDown, otherKey, shiftTapHandled
@@ -207,6 +201,7 @@ HandleShiftRelease() {
     }
 }
 
+; All Shift+special keys mark otherKey := true
 ~+End:: global otherKey := true
 ~+Home:: global otherKey := true
 ~+PgUp:: global otherKey := true
@@ -244,6 +239,7 @@ HandleShiftRelease() {
 ~+Pause:: global otherKey := true
 ~+CapsLock:: global otherKey := true
 ~+NumLock:: global otherKey := true
+
 ; ---------------------------------------------------------
 ; Keyboard layout helpers
 ; ---------------------------------------------------------
@@ -266,20 +262,14 @@ EnsureLayout(target) {
     }
 }
 
-; ---------------------------------------------------------
-; Type characters using the correct layout (no restore)
-; ---------------------------------------------------------
 TypeWithLayout(str, targetLayout) {
-    OutputDebug("Typing with layout: " . Format("0x{:04X}", targetLayout))
     EnsureLayout(targetLayout)
-
-    OutputDebug("Typing string: " . str)
     for ch in StrSplit(str, "")
         Send ch
 }
 
 ; ---------------------------------------------------------
-; Helper: iterate from x to y with step k
+; Selection helpers
 ; ---------------------------------------------------------
 x_to_y_step_k(&i, x, y, k := 1) {
     return (i := x + (a_index - 1)) <= y ? (a_index += k - 1, true) : (i -= k, false)
@@ -290,14 +280,83 @@ SelectNChars(n) {
     while x_to_y_step_k(&i, 1, n)
         Send "+{Left}"
 }
+
+; ---------------------------------------------------------
+; Google Suite Shift‑tap handler
+; ---------------------------------------------------------
+HandleGoogleSuiteShiftTap() {
+    local gui2  ; Declare GUI variables as local
+    oldClip := A_Clipboard
+    OutputDebug("Google Suite Shift‑tap: copied clipboard length=" . StrLen(oldClip))
+    ; If clipboard is empty, show guidance message and exit early
+    if (oldClip = "") {
+        gui2 := Gui("+AlwaysOnTop -Caption +ToolWindow")
+        gui2.SetFont("s12")
+        gui2.Add("Text", , "Shift: in Google - copy text, then press shift")
+        gui2.Show("AutoSize Center")
+
+        ; Refocus Chrome so user can copy
+        exe := GetActiveExe()
+        WinActivate("ahk_exe " exe)
+
+        Sleep 3000
+        gui2.Destroy()
+        return
+    }
+    OutputDebug("Google Suite Shift‑tap detected")
+
+    Send "!h"
+    Sleep 120
+    OutputDebug("Sent Alt+h to remove canvas focus")
+
+    Send "{Shift down}"
+    Sleep 50
+    Send "{Shift up}"
+    OutputDebug("Sent synthetic Shift keypress")
+
+    Sleep 200
+    OutputDebug("sending Escape")
+    Send "{Esc}"
+
+    changed := false
+
+    loop 50 {
+        Sleep 200
+        if (A_Clipboard != oldClip) {
+            OutputDebug("change detected in clipboard")
+            changed := true
+            break
+        }
+    }
+
+    if changed {
+        gui2 := Gui("+AlwaysOnTop -Caption +ToolWindow")
+        gui2.SetFont("s12")
+        gui2.Add("Text", , "Now paste the fixed text")
+        gui2.Show("AutoSize Center")
+
+        ; Move focus back to Chrome window
+        exe := GetActiveExe()
+        WinActivate("ahk_exe " exe)
+
+        ; gui2 stays on top because of +AlwaysOnTop
+        Sleep 3000
+        gui2.Destroy()
+        return
+    }
+
+}
+
 ; ---------------------------------------------------------
 ; Main logic: copy → translate → type
 ; ---------------------------------------------------------
-global undoLength := 0
 HandleShiftTap() {
     global undoActive, undoText, undoLength
 
-    OutputDebug("Handling Shift tap, undoActive=" . undoActive)
+    exe := GetActiveExe()
+    if IsChromeFamily(exe) && IsGoogleSuiteTab() {
+        return HandleGoogleSuiteShiftTap()
+    }
 
     text := GetSelectedText()
     if (text = "") {
@@ -305,45 +364,33 @@ HandleShiftTap() {
         return
     }
 
-    ; Undo toggle
     if (undoActive) {
         OutputDebug("Performing undo of previous translation: '" . undoText . "' length=" . undoLength)
-        ; Select the previously typed text
         SelectNChars(undoLength)
-
-        ; Detect language of undo text
         lang := DetectLanguage(undoText)
 
-        ; Type undo text in correct layout
         if (lang = "en")
-            TypeWithLayout(undoText, 0x040D) ; Hebrew
+            TypeWithLayout(undoText, 0x040D)
         else
-            TypeWithLayout(undoText, 0x0409) ; English
+            TypeWithLayout(undoText, 0x0409)
 
-        ; Reselect the undone text for potential redo
         SelectNChars(undoLength)
-
         undoActive := false
         return
     }
 
-    ; Normal forward translation
     undoText := text
     undoActive := true
 
     lang := DetectLanguage(text)
     shifted := TranslateText(text, lang)
-
-    ; Store how many chars we typed so undo can select them
     undoLength := StrLen(shifted)
 
-    ; Type translated text in correct layout
     if (lang = "en")
-        TypeWithLayout(shifted, 0x040D) ; Hebrew
+        TypeWithLayout(shifted, 0x040D)
     else
-        TypeWithLayout(shifted, 0x0409) ; English
+        TypeWithLayout(shifted, 0x0409)
 
-    ; Reselect the undone text for potential redo
     SelectNChars(undoLength)
 }
 
