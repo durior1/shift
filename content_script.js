@@ -20,7 +20,96 @@
     return null;
   }
 
+  // Google Docs helpers
+  function isGoogleDocs() {
+    return location.hostname.includes("docs.google.com");
+  }
+
+  // ============================================================
+  // SHARED TRANSLATION ENGINE (no duplication anywhere else)
+  // ============================================================
+  async function translateText(text) {
+    const engUrl = chrome.runtime.getURL("mappings/english.json");
+    const hebUrl = chrome.runtime.getURL("mappings/hebrew.json");
+
+    const [eng, heb] = await Promise.all([
+      fetch(engUrl).then(r => r.json()),
+      fetch(hebUrl).then(r => r.json())
+    ]);
+
+    function detectLanguage(text) {
+      let engCount = 0;
+      let hebCount = 0;
+      for (const ch of text) {
+        const inEng = eng.charToCode[ch];
+        const inHeb = heb.charToCode[ch];
+        if (inHeb && !inEng) hebCount++;
+        else if (inEng && !inHeb) engCount++;
+      }
+      return hebCount > engCount ? "he" : "en";
+    }
+
+    function translateCharDirection(c, fromLang) {
+      if (fromLang === "en") {
+        const engCode = eng.charToCode[c];
+        return engCode ? (heb.codeToChar[engCode] ?? c) : c;
+      } else {
+        const hebCode = heb.charToCode[c];
+        return hebCode ? (eng.codeToChar[hebCode] ?? c) : c;
+      }
+    }
+
+    function translatePreserveCase(ch, fromLang) {
+      if (ch !== ch.toLowerCase()) return ch;
+      const mapped = translateCharDirection(ch, fromLang);
+      return mapped ?? ch;
+    }
+
+    const fromLang = detectLanguage(text);
+    let shifted = "";
+    for (const ch of text) shifted += translatePreserveCase(ch, fromLang);
+
+    return shifted;
+  }
+
+  // ============================================================
+  // MAIN HANDLER
+  // ============================================================
   async function handleShiftTap() {
+
+    // ============================================================
+    // GOOGLE DOCS — CLIPBOARD MODE
+    // ============================================================
+    if (isGoogleDocs()) {
+      try {
+        const selected = await navigator.clipboard.readText();
+
+        if (!selected || !selected.trim()) {
+          console.debug("[Shift] Clipboard empty or no selection");
+          return;
+        }
+
+        // console.debug("[Shift] Clipboard contains:", selected);
+
+        const shifted = await translateText(selected);
+
+        // console.debug("[Shift] Translated:", shifted);
+
+        await navigator.clipboard.writeText(shifted);
+
+        console.debug("[Shift] Clipboard updated");
+
+      } catch (err) {
+        console.error("[Shift] Clipboard error:", err);
+      }
+
+      return;
+    }
+
+    // ============================================================
+    // NORMAL EDITABLE HANDLING
+    // ============================================================
+
     let sel = window.getSelection();
 
     // Fallback for hidden textarea (Google Calendar)
@@ -71,55 +160,8 @@
 
     const id = genId();
 
-    // Load mappings
-    const engUrl = chrome.runtime.getURL("mappings/english.json");
-    const hebUrl = chrome.runtime.getURL("mappings/hebrew.json");
-
-    async function fetchJson(url) {
-      const r = await fetch(url);
-      return JSON.parse(await r.text());
-    }
-
-    const [eng, heb] = await Promise.all([fetchJson(engUrl), fetchJson(hebUrl)]);
-
-    function detectLanguage(text) {
-      let engCount = 0;
-      let hebCount = 0;
-      for (const ch of text) {
-        const inEng = eng.charToCode[ch];
-        const inHeb = heb.charToCode[ch];
-        if (inHeb && !inEng) hebCount++;
-        else if (inEng && !inHeb) engCount++;
-      }
-      return hebCount > engCount ? "he" : "en";
-    }
-
-    function translateCharDirection(c, fromLang) {
-      if (fromLang === "en") {
-        const engCode = eng.charToCode[c];
-        if (engCode) return heb.codeToChar[engCode] ?? c;
-        return c;
-      } else {
-        const hebCode = heb.charToCode[c];
-        if (hebCode) return eng.codeToChar[hebCode] ?? c;
-        return c;
-      }
-    }
-
-    function translatePreserveCase(ch, fromLang) {
-      // Uppercase stays untouched
-      if (ch !== ch.toLowerCase()) return ch;
-
-      const mapped = translateCharDirection(ch, fromLang);
-      return mapped ?? ch;
-    }
-
-    const fromLang = detectLanguage(text);
-    let shifted = "";
-
-    for (const ch of text) {
-      shifted += translatePreserveCase(ch, fromLang);
-    }
+    // Translate using shared engine
+    const shifted = await translateText(text);
 
     //
     // INPUT / TEXTAREA
@@ -180,22 +222,28 @@
     );
   }
 
-  document.addEventListener('keydown', (e) => {
+  // ============================================================
+  // GLOBAL KEY LISTENERS
+  // ============================================================
+
+  window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
       shiftPressed = true;
       otherKeyPressed = false;
     } else if (shiftPressed) {
       otherKeyPressed = true;
     }
-  }, true);
+  }, { capture: true });
 
-  document.addEventListener('keyup', (e) => {
+  window.addEventListener('keyup', async (e) => {
     if (e.key === 'Shift' && shiftPressed) {
       if (!otherKeyPressed) {
+
         handleShiftTap().catch(err => console.error('shift extension error', err));
       }
       shiftPressed = false;
       otherKeyPressed = false;
     }
-  }, true);
+  }, { capture: true });
+
 })();
