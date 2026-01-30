@@ -20,8 +20,20 @@ GetActiveExe() {
     return WinGetProcessName(hwnd)
 }
 
+IsWordApp(exe) {
+    return exe ~= "i)^(winword).exe$"
+}
+
+IsPowerPointApp(exe) {
+    return exe ~= "i)^(powerpnt).exe$"
+}
+
+IsExcelApp(exe) {
+    return exe ~= "i)^(excel).exe$"
+}
+
 IsOfficeApp(exe) {
-    return exe ~= "i)^(winword|outlook|powerpnt|excel).exe$"
+    return IsWordApp(exe) || IsPowerPointApp(exe) || IsExcelApp(exe)
 }
 
 IsChromeFamily(exe) {
@@ -37,55 +49,53 @@ IsGoogleSuiteTab() {
 ; Office COM selection: get text + indices when possible
 ; ---------------------------------------------------------
 TryGetOfficeSelection(&text, &start, &end) {
+    OutputDebug("Trying to get Office selection")
     text := ""
     start := 0
     end := 0
 
     ; Word
-    try {
-        word := ComObjActive("Word.Application")
-        sel := word.Selection
-        if (sel.Type = 2) {
-            text := sel.Text
-            if (SubStr(text, -1) = "`n" || SubStr(text, -1) = "`r")
-                text := SubStr(text, 1, -1)
-            start := sel.Start
-            end := sel.End
-            return true
+    if (IsWordApp(GetActiveExe()))
+        try {
+            OutputDebug("Trying Word selection")
+            word := ComObjActive("Word.Application")
+            sel := word.Selection
+            if (sel.Type = 2) {
+                text := sel.Text
+                if (SubStr(text, -1) = "`n" || SubStr(text, -1) = "`r")
+                    text := SubStr(text, 1, -1)
+                start := sel.Start
+                end := sel.End
+                return true
+            }
         }
-    }
-
-    ; Outlook (Word editor)
-    try {
-        outlook := ComObjActive("Outlook.Application")
-        editor := outlook.ActiveInspector().WordEditor.Application
-        sel := editor.Selection
-        if (sel.Type = 2) {
-            text := sel.Text
-            start := sel.Start
-            end := sel.End
-            return true
-        }
-    }
 
     ; PowerPoint (no real indices)
-    try {
-        ppt := ComObjActive("PowerPoint.Application")
-        tr := ppt.ActiveWindow.Selection.TextRange
-        text := tr.Text
-        start := 1
-        end := StrLen(text)
-        return true
-    }
+    if (IsPowerPointApp(GetActiveExe()))
+        try {
+            OutputDebug("Trying PowerPoint selection")
+            ppt := ComObjActive("PowerPoint.Application")
+            tr := ppt.ActiveWindow.Selection.TextRange
+            text := tr.Text
+            OutputDebug("Raw PowerPoint text: " . text)
+            if (SubStr(text, -1) = "`n" || SubStr(text, -1) = "`r")
+                text := SubStr(text, 1, -1)
+            OutputDebug("Cleaned PowerPoint text: " . text)
+            start := tr.Start
+            end := tr.Start + tr.Length
+            OutputDebug("PowerPoint selection: " . text . " [" . start . "," . end . "]")
+            return true
+        }
 
     ; Excel (cell text)
-    try {
-        excel := ComObjActive("Excel.Application")
-        text := excel.ActiveCell.Text
-        start := 1
-        end := StrLen(text)
-        return true
-    }
+    if (IsExcelApp(GetActiveExe()))
+        try {
+            excel := ComObjActive("Excel.Application")
+            text := excel.ActiveCell.Text
+            start := 1
+            end := StrLen(text)
+            return true
+        }
 
     return false
 }
@@ -151,6 +161,7 @@ HandleGoogleSuiteShiftTap() {
 ~RShift up:: HandleShiftRelease()
 
 HandleShiftRelease() {
+    OutputDebug("Shift released")
     global shiftDown, otherKey, shiftTapHandled
 
     exe := GetActiveExe()
@@ -177,8 +188,10 @@ HandleShiftRelease() {
 ; ---------------------------------------------------------
 HandleShiftTap() {
     global undoActive, undoText, undoStart, undoEnd
+    OutputDebug("Handling shift tap")
 
     exe := GetActiveExe()
+    OutputDebug("Active exe: " . exe)
 
     ; Google Docs/Sheets/Slides → special handler
     if IsChromeFamily(exe) && IsGoogleSuiteTab() {
@@ -233,61 +246,48 @@ TryOfficeReplaceAndReselect(newText) {
     global undoStart, undoEnd
 
     ; Word
-    try {
-        word := ComObjActive("Word.Application")
-        sel := word.Selection
+    if (IsWordApp(GetActiveExe()))
+        try {
+            word := ComObjActive("Word.Application")
+            sel := word.Selection
 
-        ; Replace original range
-        sel.SetRange(undoStart, undoEnd)
-        sel.Text := newText
+            ; Replace original range
+            sel.SetRange(undoStart, undoEnd)
+            sel.Text := newText
 
-        ; Reselect the newly inserted text
-        newEnd := undoStart + StrLen(newText)
-        sel.SetRange(undoStart, newEnd)
+            ; Reselect the newly inserted text
+            newEnd := undoStart + StrLen(newText)
+            sel.SetRange(undoStart, newEnd)
 
-        ; Update undo range
-        undoEnd := newEnd
-        return
-    }
-
-    ; Outlook (Word editor)
-    try {
-        outlook := ComObjActive("Outlook.Application")
-        editor := outlook.ActiveInspector().WordEditor.Application
-        sel := editor.Selection
-
-        sel.SetRange(undoStart, undoEnd)
-        sel.Text := newText
-
-        newEnd := undoStart + StrLen(newText)
-        sel.SetRange(undoStart, newEnd)
-
-        undoEnd := newEnd
-        return
-    }
+            ; Update undo range
+            undoEnd := newEnd
+            return
+        }
 
     ; PowerPoint: no indices → just overwrite and reselect whole range
-    try {
-        ppt := ComObjActive("PowerPoint.Application")
-        tr := ppt.ActiveWindow.Selection.TextRange
-        tr.Text := newText
-        tr.Select()
+    if (IsPowerPointApp(GetActiveExe()))
+        try {
+            ppt := ComObjActive("PowerPoint.Application")
+            tr := ppt.ActiveWindow.Selection.TextRange
+            tr.Text := newText
+            tr.Select()
 
-        undoStart := 1
-        undoEnd := StrLen(newText)
-        return
-    }
+            undoStart := 1
+            undoEnd := StrLen(newText)
+            return
+        }
 
     ; Excel: overwrite cell and select entire cell text
-    try {
-        excel := ComObjActive("Excel.Application")
-        excel.ActiveCell.Value := newText
-        excel.ActiveCell.Select()
+    if (IsExcelApp(GetActiveExe()))
+        try {
+            excel := ComObjActive("Excel.Application")
+            excel.ActiveCell.Value := newText
+            excel.ActiveCell.Select()
 
-        undoStart := 1
-        undoEnd := StrLen(newText)
-        return
-    }
+            undoStart := 1
+            undoEnd := StrLen(newText)
+            return
+        }
 }
 
 ; ---------------------------------------------------------
@@ -297,46 +297,37 @@ TryOfficeUndo() {
     global undoActive, undoText, undoStart, undoEnd
 
     ; Word
-    try {
-        word := ComObjActive("Word.Application")
-        sel := word.Selection
-        sel.SetRange(undoStart, undoEnd)
-        sel.Text := undoText
-        sel.SetRange(undoStart, undoStart + StrLen(undoText))
-        undoActive := false
-        return
-    }
-
-    ; Outlook
-    try {
-        outlook := ComObjActive("Outlook.Application")
-        editor := outlook.ActiveInspector().WordEditor.Application
-        sel := editor.Selection
-        sel.SetRange(undoStart, undoEnd)
-        sel.Text := undoText
-        sel.SetRange(undoStart, undoStart + StrLen(undoText))
-        undoActive := false
-        return
-    }
+    if (IsWordApp(GetActiveExe()))
+        try {
+            word := ComObjActive("Word.Application")
+            sel := word.Selection
+            sel.SetRange(undoStart, undoEnd)
+            sel.Text := undoText
+            sel.SetRange(undoStart, undoStart + StrLen(undoText))
+            undoActive := false
+            return
+        }
 
     ; PowerPoint
-    try {
-        ppt := ComObjActive("PowerPoint.Application")
-        tr := ppt.ActiveWindow.Selection.TextRange
-        tr.Text := undoText
-        tr.Select()
-        undoActive := false
-        return
-    }
+    if (IsPowerPointApp(GetActiveExe()))
+        try {
+            ppt := ComObjActive("PowerPoint.Application")
+            tr := ppt.ActiveWindow.Selection.TextRange
+            tr.Text := undoText
+            tr.Select()
+            undoActive := false
+            return
+        }
 
     ; Excel
-    try {
-        excel := ComObjActive("Excel.Application")
-        excel.ActiveCell.Value := undoText
-        excel.ActiveCell.Select()
-        undoActive := false
-        return
-    }
+    if (IsExcelApp(GetActiveExe()))
+        try {
+            excel := ComObjActive("Excel.Application")
+            excel.ActiveCell.Value := undoText
+            excel.ActiveCell.Select()
+            undoActive := false
+            return
+        }
 }
 
 ; ---------------------------------------------------------
