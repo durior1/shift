@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Zip Chrome Extension",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "powershell -NoProfile -Command \"Compress-Archive -Path *.json,*.js,*.html,*.png,mappings -DestinationPath extension.zip -Force\"",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Build AHK to EXE",
+      "type": "shell",
+      "command": "C:\\Progra~1\\AutoHotkey\\Compiler\\Ahk2Exe.exe",
+      "args": [
+          "/in", "${workspaceFolder}\\AutoHotkey\\shift.ahk",
+          "/out", "${workspaceFolder}\\downloads\\shift-he-en.exe",
+          "/base", "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe"
+      ],
+      "group": {
+          "kind": "build",
+          "isDefault": true
+      }
+    }
+  ]
+}
