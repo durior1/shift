@@ -222,6 +222,20 @@
     );
   }
 
+  // Listen for handshake pings from the page
+  window.addEventListener("shift:ping", (event) => {
+    const id = event.detail?.id;
+    if (!id) return;
+
+    // Respond with a unique event so the page knows we're active
+    window.dispatchEvent(new CustomEvent(id, {
+      detail: {
+        version: chrome.runtime.getManifest().version,
+        active: true
+      }
+    }));
+  });
+
   // ============================================================
   // GLOBAL KEY LISTENERS
   // ============================================================
