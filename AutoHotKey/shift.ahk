@@ -28,12 +28,8 @@ IsPowerPointApp(exe) {
     return exe ~= "i)^(powerpnt).exe$"
 }
 
-IsExcelApp(exe) {
-    return exe ~= "i)^(excel).exe$"
-}
-
 IsOfficeApp(exe) {
-    return IsWordApp(exe) || IsPowerPointApp(exe) || IsExcelApp(exe)
+    return IsWordApp(exe) || IsPowerPointApp(exe)
 }
 
 IsChromeFamily(exe) {
@@ -84,16 +80,6 @@ TryGetOfficeSelection(&text, &start, &end) {
             start := tr.Start
             end := tr.Start + tr.Length
             OutputDebug("PowerPoint selection: " . text . " [" . start . "," . end . "]")
-            return true
-        }
-
-    ; Excel (cell text)
-    if (IsExcelApp(GetActiveExe()))
-        try {
-            excel := ComObjActive("Excel.Application")
-            text := excel.ActiveCell.Text
-            start := 1
-            end := StrLen(text)
             return true
         }
 
@@ -276,18 +262,6 @@ TryOfficeReplaceAndReselect(newText) {
             undoEnd := StrLen(newText)
             return
         }
-
-    ; Excel: overwrite cell and select entire cell text
-    if (IsExcelApp(GetActiveExe()))
-        try {
-            excel := ComObjActive("Excel.Application")
-            excel.ActiveCell.Value := newText
-            excel.ActiveCell.Select()
-
-            undoStart := 1
-            undoEnd := StrLen(newText)
-            return
-        }
 }
 
 ; ---------------------------------------------------------
@@ -315,16 +289,6 @@ TryOfficeUndo() {
             tr := ppt.ActiveWindow.Selection.TextRange
             tr.Text := undoText
             tr.Select()
-            undoActive := false
-            return
-        }
-
-    ; Excel
-    if (IsExcelApp(GetActiveExe()))
-        try {
-            excel := ComObjActive("Excel.Application")
-            excel.ActiveCell.Value := undoText
-            excel.ActiveCell.Select()
             undoActive := false
             return
         }
