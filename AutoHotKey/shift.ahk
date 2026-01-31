@@ -11,6 +11,7 @@ global undoEnd := 0
 global shiftDown := false
 global otherKey := false
 global shiftTapHandled := false
+global unsupportedDialogShown := false
 
 ; ---------------------------------------------------------
 ; App detection
@@ -169,6 +170,32 @@ HandleShiftRelease() {
         otherKey := true
 }
 
+ShowUnsupportedDialog() {
+    GuiWarn := Gui("+AlwaysOnTop", "Shift plugin doesn't support this app")
+    GuiWarn.Add("Text", "w300",
+        "Shift plugin for AutoHotKey doesn't support automatic language switching in this application.")
+    GuiWarn.Add("Text", "w300", "This is because the application doesn't expose text selection information via COM.")
+    GuiWarn.Add("Text", "w300",
+        "Shift functionality is available in Chromium-based browsers, as well as Microsoft Word and PowerPoint.")
+    GuiWarn.Add("Text", "w300",
+        "Support our request for Microsoft to add this functionality directly into Windows to enable broader compatibility."
+    )
+    GuiWarn.Add("Link", "w300",
+        '<a href="https://shift-language-corrector-acae6007.base44.app">Learn more and vote for Windows support</a>')
+    GuiWarn.Add("Button", "Default", "OK").OnEvent("Click", (*) => GuiWarn.Destroy())
+    GuiWarn.Show()
+}
+
+MaybeShowUnsupportedDialog() {
+    global unsupportedDialogShown
+
+    if (unsupportedDialogShown)
+        return
+
+    unsupportedDialogShown := true
+    ShowUnsupportedDialog()
+}
+
 ; ---------------------------------------------------------
 ; Main logic
 ; ---------------------------------------------------------
@@ -222,7 +249,8 @@ HandleShiftTap() {
         return
     }
 
-    ; Everything else → do nothing
+    ; Everything else → unsupported dialog if not shown yet
+    MaybeShowUnsupportedDialog()
 }
 
 ; ---------------------------------------------------------
