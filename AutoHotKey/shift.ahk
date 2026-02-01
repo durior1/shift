@@ -93,14 +93,26 @@ TryGetOfficeSelection(&text, &start, &end) {
 HandleGoogleSuiteShiftTap() {
     oldClip := A_Clipboard
 
-    if (oldClip = "") {
-        gui2 := Gui("+AlwaysOnTop -Caption +ToolWindow")
-        gui2.SetFont("s12")
-        gui2.Add("Text", , "Shift: in Google - copy text, then press shift")
-        gui2.Show("AutoSize Center")
+    ; Helper to show popup on same screen as active window
+    ShowLocalPopup(text) {
+        local gui1
+        hwnd := WinGetID("A")
+        WinGetPos(&x, &y, &w, &h, hwnd)
+
+        gui1 := Gui("+AlwaysOnTop -Caption +ToolWindow")
+        gui1.SetFont("s12")
+        gui1.Add("Text", , text)
+
+        ; Center relative to active window
+        gui1.Show("AutoSize x" . (x + w // 2 - 150) . " y" . (y + h // 2 - 50))
+
         WinActivate("A")
         Sleep 3000
-        gui2.Destroy()
+        gui1.Destroy()
+    }
+
+    if (oldClip = "") {
+        ShowLocalPopup("Shift: in Google - copy text, then press shift")
         return
     }
 
@@ -115,13 +127,7 @@ HandleGoogleSuiteShiftTap() {
     loop 50 {
         Sleep 200
         if (A_Clipboard != oldClip) {
-            gui2 := Gui("+AlwaysOnTop -Caption +ToolWindow")
-            gui2.SetFont("s12")
-            gui2.Add("Text", , "Now paste the fixed text")
-            gui2.Show("AutoSize Center")
-            WinActivate("A")
-            Sleep 3000
-            gui2.Destroy()
+            ShowLocalPopup("Now paste the fixed text")
             return
         }
     }
@@ -130,18 +136,25 @@ HandleGoogleSuiteShiftTap() {
 ; ---------------------------------------------------------
 ; SHIFT TAP DETECTION
 ; ---------------------------------------------------------
-~LShift:: {
+~LShift::
+~RShift::
+{
     global shiftDown, otherKey, shiftTapHandled
     shiftDown := true
     otherKey := false
     shiftTapHandled := false
-}
 
-~RShift:: {
-    global shiftDown, otherKey, shiftTapHandled
-    shiftDown := true
-    otherKey := false
-    shiftTapHandled := false
+    ih := InputHook("V") ; V = visible, but we only use it to detect keys
+    ih.KeyOpt("{All}", "E") ; E = end on any key
+    ih.KeyOpt("{LShift}", "-E") ; don't end on Shift
+    ih.KeyOpt("{RShift}", "-E")
+
+    ih.Start()
+    ih.Wait() ; waits until a non-shift key is pressed
+
+    if (ih.EndKey != "")  ; some other key was pressed
+        otherKey := true
+    return
 }
 
 ~LShift up:: HandleShiftRelease()
