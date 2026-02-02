@@ -95,18 +95,33 @@ HandleGoogleSuiteShiftTap() {
 
     ; Helper to show popup on same screen as active window
     ShowLocalPopup(text) {
-        local gui1
+        local gui1, x, y, w, h, gx, gy, gw, gh
+
         hwnd := WinGetID("A")
-        WinGetPos(&x, &y, &w, &h, hwnd)
+        if hwnd {
+            WinGetPos(&x, &y, &w, &h, hwnd)
+        } else {
+            ; fallback to primary screen center
+            x := 0, y := 0, w := A_ScreenWidth, h := A_ScreenHeight
+        }
 
         gui1 := Gui("+AlwaysOnTop -Caption +ToolWindow")
         gui1.SetFont("s12")
         gui1.Add("Text", , text)
 
-        ; Center relative to active window
-        gui1.Show("AutoSize x" . (x + w // 2 - 150) . " y" . (y + h // 2 - 50))
+        ; First show off-screen to measure size
+        gui1.Show("AutoSize x-10000 y-10000")
 
-        WinActivate("A")
+        ; Now get GUI size
+        gui1.GetPos(&gx, &gy, &gw, &gh)
+
+        ; Compute centered position
+        cx := x + (w // 2) - (gw // 2)
+        cy := y + (h // 2) - (gh // 2)
+
+        ; Move to final position
+        gui1.Move(cx, cy)
+
         Sleep 3000
         gui1.Destroy()
     }
