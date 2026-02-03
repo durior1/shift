@@ -97,7 +97,10 @@ HandleGoogleSuiteShiftTap() {
     ShowLocalPopup(text) {
         local gui1, x, y, w, h, gx, gy, gw, gh
 
-        hwnd := WinGetID("A")
+        hwnd := 0
+        try {
+            hwnd := WinGetID("A")
+        }
         if hwnd {
             WinGetPos(&x, &y, &w, &h, hwnd)
         } else {
