@@ -9,7 +9,7 @@ chrome.commands.onCommand.addListener((command) => {
       url: "popup.html",
       type: "popup",
       width: 500,
-      height: 200,
+      height: 300,
       focused: true
     });
   }

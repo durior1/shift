@@ -11,6 +11,33 @@ const tooltip = document.getElementById('tooltip');
 // Auto-focus the input field
 textInput.focus();
 
+// Auto-translate on paste
+textInput.addEventListener('input', async (e) => {
+  const text = textInput.value.trim();
+  
+  if (!text) return;
+  
+  try {
+    // Call the shared translation function
+    const translated = await translateText(text);
+    
+    // Write to clipboard
+    await navigator.clipboard.writeText(translated);
+    
+    // Show success tooltip
+    showTooltip('Translated text copied to clipboard! Paste it now.');
+    
+    // Close window after a brief delay
+    setTimeout(() => {
+      window.close();
+    }, 1500);
+    
+  } catch (err) {
+    console.error('Translation error:', err);
+    showTooltip('Error during translation. Please try again.');
+  }
+});
+
 // Close button handler
 closeBtn.addEventListener('click', () => {
   window.close();

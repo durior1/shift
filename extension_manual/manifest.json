@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Alt Paste: Fix Hebrew/English keyboard mistakes",
+  "name": "Shift Paste: Fix Hebrew/English keyboard mistakes",
   "version": "1.1.2",
-  "description": "Works where you work! Typing English, getting Hebrish (Eמעךןדי)? Select, copy, then ctrl+alt+V, then paste (ctrl+V) - FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, העתיקו, לחצו קונטרול+אלט+וי ואז הדביקו טקסט מתוקן",
+  "description": "Works where you work! Typing English, getting Hebrish (Eמעךןדי)? Select, copy, then ctrl+shift+V, then paste (ctrl+V) - FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, העתיקו, לחצו קונטרול+שיפט+וי ואז הדביקו טקסט מתוקן",
   "commands": {
     "activate": {
       "suggested_key": {
@@ -16,7 +16,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Alt Paste - Ctrl+Alt+V"
+    "default_title": "Shift Paste - Ctrl+Shift+V"
   },
   "icons": {
     "16": "shift16.png",
