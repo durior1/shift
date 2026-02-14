@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Shift Paste: Fix Hebrew/English keyboard mistakes",
+  "name": "Shift Paste: Fix Hebrew/English keyboard mistakes (No-perms work version)",
   "version": "1.1.2",
-  "description": "Works where you work! Typing English, getting Hebrish (Eמעךןדי)? Select, copy, then ctrl+shift+V, then paste (ctrl+V) - FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, העתיקו, לחצו קונטרול+שיפט+וי ואז הדביקו טקסט מתוקן",
+  "description": "Typing Hebrish (Eמעךןדי)? Copy it, we'll fix it!\nהקלדתם טקסט בשפה הלא נכונה? העתיקו, אנחנו נתקן ותדביקו טקסט מתוקן",
   "commands": {
     "activate": {
       "suggested_key": {
