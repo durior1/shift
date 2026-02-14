@@ -24,6 +24,9 @@ textInput.addEventListener('input', async (e) => {
     // Write to clipboard
     await navigator.clipboard.writeText(translated);
     
+    // hide contents of window
+    document.querySelector('.container').classList.add('hidden');
+    
     // Show success tooltip
     showTooltip('Translated text copied to clipboard! Paste it now.');
     
