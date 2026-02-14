@@ -76,6 +76,11 @@
       transition: all 0.2s;
     }
     
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
     #translateBtn {
       background-color: #0078d4;
       color: white;
@@ -125,7 +130,7 @@
     <div class="subtitle"><b>Paste</b> the text you copied and we'll fix it to the right language</div>
     <textarea id="textInput" placeholder="Paste your text here..."></textarea>
     <div class="button-group">
-      <button id="translateBtn">Translate & Copy</button>
+      <button id="translateBtn" disabled>Fix & Copy (Auto)</button>
       <button id="closeBtn">Close (Esc)</button>
     </div>
   </div>

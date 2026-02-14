@@ -15,6 +15,9 @@ textInput.focus();
 textInput.addEventListener('input', async (e) => {
   const text = textInput.value.trim();
   
+  // Enable button when there's text, disable when empty
+  translateBtn.disabled = !text;
+  
   if (!text) return;
   
   try {
