@@ -2,11 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Zip Chrome Extension",
+      "label": "Build Chrome Extensions",
       "type": "shell",
       "options": { "cwd": "${workspaceFolder}" },
-      "command": "powershell -NoProfile -Command \"Compress-Archive -Path *.json,*.js,*.html,*.png,mappings -DestinationPath extension.zip -Force\"",
-      "group": "build",
+      "command": "powershell -NoProfile -Command \"Compress-Archive -Path automatic/manifest.json,automatic/content_script.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension.zip -Force; Compress-Archive -Path manual/manifest.json,manual/background.js,manual/popup.html,manual/popup.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension_manual.zip -Force\"",
+      "group": {
+          "kind": "build",
+          "isDefault": true
+      },
       "problemMatcher": []
     },
     {
@@ -19,8 +22,7 @@
           "/base", "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe"
       ],
       "group": {
-          "kind": "build",
-          "isDefault": true
+          "kind": "build"
       }
     }
   ]

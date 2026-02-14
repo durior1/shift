@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Shift: Fix Hebrew/English keyboard mistakes",
-  "version": "1.1.1",
-  "description": "Typing English, getting Hebrish (Eמעךןדי)? Select, type <shift>, FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, הקישו שיפט ונתקן",
+  "version": "1.1.2",
+  "description": "Quick and convenient! Typing English, getting Hebrish (Eמעךןדי)? Select, type <shift>, FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, הקישו שיפט ונתקן",
+  "permissions": ["storage", "activeTab"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -10,15 +11,13 @@
       "run_at": "document_idle",
       "all_frames": true
     }
-  ]
-  ,
+  ],
   "web_accessible_resources": [
     {
       "resources": ["mappings/*.json"],
       "matches": ["<all_urls>"]
     }
-  ]
-  ,
+  ],
   "icons": {
     "16": "shift16.png",
     "32": "shift32.png",

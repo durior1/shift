@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Alt Paste: Fix Hebrew/English keyboard mistakes",
+  "version": "1.1.2",
+  "description": "Works where you work! Typing English, getting Hebrish (Eמעךןדי)? Select, copy, then ctrl+alt+V, then paste (ctrl+V) - FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, העתיקו, לחצו קונטרול+אלט+וי ואז הדביקו טקסט מתוקן",
+  "commands": {
+    "activate": {
+      "suggested_key": {
+        "windows": "Ctrl+Shift+V",
+        "mac": "Ctrl+Shift+V"
+      },
+      "description": "Open the transliteration window"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Alt Paste - Ctrl+Alt+V"
+  },
+  "icons": {
+    "16": "shift16.png",
+    "32": "shift32.png",
+    "48": "shift48.png",
+    "128": "shift128.png"
+  }
+}
