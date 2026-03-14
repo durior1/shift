@@ -5,7 +5,7 @@
       "label": "Build Chrome Extensions",
       "type": "shell",
       "options": { "cwd": "${workspaceFolder}" },
-      "command": "powershell -NoProfile -Command \"Compress-Archive -Path automatic/manifest.json,automatic/content_script.js,automatic/background.js,automatic/popup.html,automatic/popup.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension.zip -Force; Compress-Archive -Path manual/manifest.json,manual/background.js,manual/popup.html,manual/popup.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension_manual.zip -Force\"",
+      "command": "powershell -NoProfile -Command \"Compress-Archive -Path automatic/manifest.json,automatic/content_script.js,automatic/popup.html,automatic/popup.js,background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension.zip -Force; Compress-Archive -Path manual/manifest.json,manual/popup.html,manual/popup.js,background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension_manual.zip -Force\"",,
       "group": {
           "kind": "build",
           "isDefault": true
