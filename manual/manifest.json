@@ -3,20 +3,12 @@
   "name": "Shift Paste: Fix Hebrew/English keyboard mistakes (No-perms work version)",
   "version": "1.1.2",
   "description": "Typing Hebrish (Eמעךןדי)? Copy it, we'll fix it!\nהקלדתם טקסט בשפה הלא נכונה? העתיקו, אנחנו נתקן ותדביקו טקסט מתוקן",
-  "commands": {
-    "activate": {
-      "suggested_key": {
-        "windows": "Ctrl+Shift+V",
-        "mac": "Ctrl+Shift+V"
-      },
-      "description": "Open the transliteration window"
-    }
-  },
+  "permissions": ["contextMenus"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Shift Paste - Ctrl+Shift+V"
+    "default_title": "Shift Paste - Right-click to fix language"
   },
   "icons": {
     "16": "shift16.png",

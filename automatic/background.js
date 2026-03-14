@@ -1,5 +1,5 @@
 /**
- * Background Service Worker for Shift Paste
+ * Background Service Worker for Shift Extension
  * Manages context menu for manual paste translation
  */
 
@@ -7,7 +7,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "shift-paste",
-    title: "Shift Paste - Fix Language",
+    title: "Shift Paste - Ctrl-&V to fix language",
     contexts: ["editable"],
     documentUrlPatterns: ["<all_urls>"]
   });

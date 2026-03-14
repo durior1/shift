@@ -1,10 +1,21 @@
 /**
  * Background Service Worker for Shift Paste
- * Listens for the keyboard command and opens the translation popup window
+ * Manages context menu for manual paste translation
  */
 
-chrome.commands.onCommand.addListener((command) => {
-  if (command === "activate") {
+// Create context menu on extension load
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "shift-paste",
+    title: "Shift Paste - Fix Language",
+    contexts: ["editable"],
+    documentUrlPatterns: ["<all_urls>"]
+  });
+});
+
+// Handle context menu click
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "shift-paste") {
     chrome.windows.create({
       url: "popup.html",
       type: "popup",
