@@ -83,18 +83,13 @@ function translateSelectedText() {
   const selectedText = getSelectedText();
   
   if (!selectedText) {
-    DocumentApp.getUi().alert("Please select some text to translate.");
+    DocumentApp.getUi().alert("Please select some text to fix.");
     return;
   }
   
   const translatedText = translateText(selectedText);
   
-  if (replaceSelectedText(translatedText)) {
-    DocumentApp.getUi().showModelessDialog(
-      HtmlService.createHtmlOutput("<p>Text translated successfully!</p>"),
-      "Shift: Translation Complete"
-    );
-  } else {
+  if (!replaceSelectedText(translatedText)) {
     DocumentApp.getUi().alert("Failed to replace selected text.");
   }
 }
