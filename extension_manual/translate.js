@@ -4,8 +4,8 @@
  */
 
 async function loadMappings() {
-  const engUrl = chrome.runtime.getURL("../mappings/english.json");
-  const hebUrl = chrome.runtime.getURL("../mappings/hebrew.json");
+  const engUrl = chrome.runtime.getURL("mappings/english.json");
+  const hebUrl = chrome.runtime.getURL("mappings/hebrew.json");
 
   const [eng, heb] = await Promise.all([
     fetch(engUrl).then(r => r.json()),

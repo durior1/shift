@@ -9,6 +9,11 @@
       "js": ["translate.js", "content_script.js"],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": ["https://docs.google.com/*"],
+      "js": ["tooltip.js", "docs-tooltip.js"],
+      "run_at": "document_idle"
     }
   ],
   "permissions": ["contextMenus", "storage", "activeTab"],

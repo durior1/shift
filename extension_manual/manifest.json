@@ -3,7 +3,14 @@
   "name": "Shift Paste: Fix Hebrew/English keyboard mistakes (No-perms work version)",
   "version": "1.2.1",
   "description": "Typing Hebrish (Eמעךןדי)? Copy it, we'll fix it!\nהקלדתם טקסט בשפה הלא נכונה? העתיקו, אנחנו נתקן ותדביקו טקסט מתוקן",
-  "permissions": ["contextMenus"],
+  "permissions": ["contextMenus", "storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/*"],
+      "js": ["tooltip.js", "docs-tooltip.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "background": {
     "service_worker": "background.js"
   },
