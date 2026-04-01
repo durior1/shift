@@ -51,7 +51,7 @@ const HEBREW_MAPPING = {
     "3": "Digit3", "4": "Digit4", "5": "Digit5", "6": "Digit6", "7": "Digit7",
     "8": "Digit8", "9": "Digit9", "-": "Minus", "=": "Equal", "[": "BracketLeft",
     "]": "BracketRight", "\\": "Backslash", "ף": "Semicolon", ",": "Quote",
-    "ת": "Comma", "ץ": "Period", ".": "Slash", "ג": "Backquote"
+    "ת": "Comma", "ץ": "Period", ".": "Slash", ";": "Backquote"
   }
 };
 
