@@ -130,7 +130,7 @@ HandleGoogleSuiteShiftTap() {
     }
 
     if (oldClip = "") {
-        ShowLocalPopup("Shift: in Google - copy text, then press shift")
+        ShowLocalPopup("Shift: in Google Suite - use Extensions menu")
         return
     }
 

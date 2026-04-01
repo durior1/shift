@@ -22,21 +22,42 @@ function getSelectedText() {
   
   let selectedText = "";
   for (let i = 0; i < elements.length; i++) {
-    const element = elements[i];
-    const text = element.getElement().asText();
+    const rangeElement = elements[i];
+    const element = rangeElement.getElement();
     
-    if (element.isPartial()) {
-      selectedText += text.getText().substring(element.getStartOffset(), element.getEndOffsetInclusive() + 1);
-    } else {
-      selectedText += text.getText();
+    try {
+      if (element.getType() === DocumentApp.ElementType.TEXT) {
+        const text = element.asText();
+        if (rangeElement.isPartial()) {
+          selectedText += text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1);
+        } else {
+          selectedText += text.getText();
+        }
+      } else if (element.getType() === DocumentApp.ElementType.PARAGRAPH) {
+        const para = element.asParagraph();
+        if (rangeElement.isPartial()) {
+          const text = para.editAsText();
+          selectedText += text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1);
+        } else {
+          selectedText += para.getText();
+        }
+      }
+    } catch(e) {
+      Logger.log("Error in getSelectedText element " + i + ": " + e);
+    }
+    
+    // Add newline between elements (except last)
+    if (i < elements.length - 1) {
+      selectedText += "\n";
     }
   }
   
+  Logger.log("getSelectedText result length: " + selectedText.length);
   return selectedText;
 }
 
 /**
- * Replaces selected text with new text
+ * Replaces selected text with new text, preserving paragraph structure
  * @param {string} newText - Text to replace with
  * @returns {boolean} Success status
  */
@@ -49,31 +70,57 @@ function replaceSelectedText(newText) {
   }
   
   const elements = selection.getRangeElements();
+  
   if (elements.length === 0) {
     return false;
   }
   
-  // Clear selection - replace first element fully, then delete rest
-  const firstElement = elements[0];
-  const text = firstElement.getElement().asText();
-  
-  if (firstElement.isPartial()) {
-    // Partial selection - replace just the selected portion
-    text.deleteText(firstElement.getStartOffset(), firstElement.getEndOffsetInclusive());
-    text.insertText(firstElement.getStartOffset(), newText);
-  } else {
-    // Full element selection - replace entire text
-    text.setText(newText);
+  try {
+    // Split the new text by newlines to match original structure
+    const lines = newText.split("\n");
+    
+    if (elements.length === 1) {
+      const rangeElement = elements[0];
+      const element = rangeElement.getElement();
+      
+      if (element.getType() === DocumentApp.ElementType.TEXT) {
+        const text = element.asText();
+        if (rangeElement.isPartial()) {
+          text.deleteText(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive());
+          text.insertText(rangeElement.getStartOffset(), newText);
+        } else {
+          text.setText(newText);
+        }
+      } else if (element.getType() === DocumentApp.ElementType.PARAGRAPH) {
+        const para = element.asParagraph();
+        para.clear();
+        para.appendText(newText);
+      }
+    } else {
+      // Multiple elements - replace each while preserving structure
+      for (let i = 0; i < elements.length; i++) {
+        const rangeElement = elements[i];
+        const element = rangeElement.getElement();
+        let lineContent = i < lines.length ? lines[i] : "";
+        
+        if (element.getType() === DocumentApp.ElementType.PARAGRAPH) {
+          const para = element.asParagraph();
+          para.clear();
+          if (lineContent) {
+            para.appendText(lineContent);
+          }
+        } else if (element.getType() === DocumentApp.ElementType.TEXT) {
+          const text = element.asText();
+          text.setText(lineContent);
+        }
+      }
+    }
+    
+    return true;
+  } catch(e) {
+    Logger.log("replaceSelectedText error: " + e.toString());
+    return false;
   }
-  
-  // Delete remaining elements if multi-element selection
-  for (let i = 1; i < elements.length; i++) {
-    const element = elements[i].getElement();
-    const parent = element.getParent();
-    parent.removeChild(element);
-  }
-  
-  return true;
 }
 
 /**
@@ -89,8 +136,12 @@ function translateSelectedText() {
   
   const translatedText = translateText(selectedText);
   
-  if (!replaceSelectedText(translatedText)) {
-    DocumentApp.getUi().alert("Failed to replace selected text.");
+  try {
+    if (!replaceSelectedText(translatedText)) {
+      DocumentApp.getUi().alert("Failed to replace selected text.");
+    }
+  } catch(e) {
+    DocumentApp.getUi().alert("Error: " + e.toString());
   }
 }
 
