@@ -2,16 +2,30 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Chrome Extensions",
+      "label": "Build All",
       "type": "shell",
-      "options": { "cwd": "${workspaceFolder}" },
-      "command": "powershell -NoProfile -Command \"Copy-Item tooltip.js automatic/; Copy-Item docs-tooltip.js automatic/; Copy-Item tooltip.js manual/; Copy-Item docs-tooltip.js manual/; Compress-Archive -Path automatic/manifest.json,automatic/content_script.js,automatic/tooltip.js,automatic/docs-tooltip.js,automatic/popup.html,automatic/popup.js,automatic/background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension.zip -Force; Compress-Archive -Path manual/manifest.json,manual/tooltip.js,manual/docs-tooltip.js,manual/popup.html,manual/popup.js,manual/background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension_manual.zip -Force; Remove-Item automatic/tooltip.js; Remove-Item automatic/docs-tooltip.js; Remove-Item manual/tooltip.js; Remove-Item manual/docs-tooltip.js\"",,
+      "command": "echo",
+      "args": ["Building Chrome & GSuite..."],
+      "dependsOn": [
+        "Build Chrome Extensions",
+        "Deploy GSuite Extension"
+      ],
       "group": {
           "kind": "build",
           "isDefault": true
       },
       "problemMatcher": []
     },
+    {
+      "label": "Build Chrome Extensions",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}" },
+      "command": "powershell -NoProfile -Command \"Copy-Item tooltip.js automatic/; Copy-Item docs-tooltip.js automatic/; Copy-Item tooltip.js manual/; Copy-Item docs-tooltip.js manual/; Compress-Archive -Path automatic/manifest.json,automatic/content_script.js,automatic/tooltip.js,automatic/docs-tooltip.js,automatic/popup.html,automatic/popup.js,automatic/background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension.zip -Force; Compress-Archive -Path manual/manifest.json,manual/tooltip.js,manual/docs-tooltip.js,manual/popup.html,manual/popup.js,manual/background.js,translate.js,mappings,shift16.png,shift32.png,shift48.png,shift128.png -DestinationPath extension_manual.zip -Force; Remove-Item automatic/tooltip.js; Remove-Item automatic/docs-tooltip.js; Remove-Item manual/tooltip.js; Remove-Item manual/docs-tooltip.js\"",,
+      "group": {
+          "kind": "build"
+      },
+      "problemMatcher": []
+    },    
     {
       "label": "Build AHK to EXE",
       "type": "shell",
@@ -24,6 +38,16 @@
       "group": {
           "kind": "build"
       }
+    },
+    {
+      "label": "Deploy GSuite Extension",
+      "type": "shell",
+      "options": { "cwd": "${workspaceFolder}/gsuite" },
+      "command": "powershell -NoProfile -Command \"clasp push; if ($?) { clasp deploy }\"",
+      "group": {
+          "kind": "build"
+      },
+      "problemMatcher": []
     }
   ]
 }
