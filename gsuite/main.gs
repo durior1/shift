@@ -20,7 +20,7 @@ function getSelectedText() {
     return null;
   }
   
-  let selectedText = "";
+  const textParts = [];
   for (let i = 0; i < elements.length; i++) {
     const rangeElement = elements[i];
     const element = rangeElement.getElement();
@@ -29,17 +29,17 @@ function getSelectedText() {
       if (element.getType() === DocumentApp.ElementType.TEXT) {
         const text = element.asText();
         if (rangeElement.isPartial()) {
-          selectedText += text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1);
+          textParts.push(text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1));
         } else {
-          selectedText += text.getText();
+          textParts.push(text.getText());
         }
       } else if (element.getType() === DocumentApp.ElementType.PARAGRAPH) {
         const para = element.asParagraph();
         if (rangeElement.isPartial()) {
           const text = para.editAsText();
-          selectedText += text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1);
+          textParts.push(text.getText().substring(rangeElement.getStartOffset(), rangeElement.getEndOffsetInclusive() + 1));
         } else {
-          selectedText += para.getText();
+          textParts.push(para.getText());
         }
       }
     } catch(e) {
@@ -48,9 +48,10 @@ function getSelectedText() {
     
     // Add newline between elements (except last)
     if (i < elements.length - 1) {
-      selectedText += "\n";
+      textParts.push("\n");
     }
   }
+  const selectedText = textParts.join("");
   
   Logger.log("getSelectedText result length: " + selectedText.length);
   return selectedText;

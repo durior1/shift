@@ -63,16 +63,19 @@ const HEBREW_MAPPING = {
 function detectLanguage(text) {
   let engCount = 0;
   let hebCount = 0;
+  const sampleSize = Math.min(100, text.length);
   
-  for (let i = 0; i < text.length; i++) {
+  for (let i = 0; i < sampleSize; i++) {
     const ch = text[i];
-    const inEng = ENGLISH_MAPPING.charToCode[ch];
-    const inHeb = HEBREW_MAPPING.charToCode[ch];
     
-    if (inHeb && !inEng) {
+    if (HEBREW_MAPPING.charToCode[ch]) {
       hebCount++;
-    } else if (inEng && !inHeb) {
+      // Early exit: 10 Hebrew chars is enough evidence
+      if (hebCount >= 10) return "he";
+    } else if (ENGLISH_MAPPING.charToCode[ch]) {
       engCount++;
+      // Early exit: 10 English chars is enough evidence
+      if (engCount >= 10) return "en";
     }
   }
   
@@ -124,11 +127,11 @@ function translatePreserveCase(ch, fromLang) {
  */
 function translateText(text) {
   const fromLang = detectLanguage(text);
-  let shifted = "";
+  const chars = [];
   
   for (let i = 0; i < text.length; i++) {
-    shifted += translatePreserveCase(text[i], fromLang);
+    chars.push(translatePreserveCase(text[i], fromLang));
   }
   
-  return shifted;
+  return chars.join("");
 }
