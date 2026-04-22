@@ -152,6 +152,6 @@ function translateSelectedText() {
 function onOpen(e) {
   DocumentApp.getUi()
     .createMenu("Shift: Translate")
-    .addItem("Translate Selected Text (He ↔ En)", "translateSelectedText")
+    .addItem("Fix Selected Text (He ↔ En)", "translateSelectedText")
     .addToUi();
 }
