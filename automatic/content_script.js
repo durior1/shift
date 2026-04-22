@@ -192,25 +192,53 @@
   // ============================================================
   // GLOBAL KEY LISTENERS
   // ============================================================
+// ============================================================
+  // GLOBAL KEY LISTENERS
+  // ============================================================
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
-      shiftPressed = true;
-      otherKeyPressed = false;
+      // Only reset flags if we aren't already mid-press 
+      // (prevents 'auto-repeat' from clearing otherKeyPressed)
+      if (!shiftPressed) {
+        shiftPressed = true;
+        otherKeyPressed = false;
+        console.debug("[Shift] Key down");
+      }
     } else if (shiftPressed) {
       otherKeyPressed = true;
     }
   }, { capture: true });
 
-  window.addEventListener('keyup', async (e) => {
-    if (e.key === 'Shift' && shiftPressed) {
-      if (!otherKeyPressed) {
-
-        handleShiftTap().catch(err => console.error('shift extension error', err));
-      }
-      shiftPressed = false;
-      otherKeyPressed = false;
+  window.addEventListener('mousedown', () => {
+    if (shiftPressed) {
+      otherKeyPressed = true;
+      console.debug("[Shift] Mouse click detected, invalidating Shift tap");
     }
   }, { capture: true });
 
+  window.addEventListener('keyup', async (e) => {
+    if (e.key === 'Shift') {
+      // Capture the state immediately before doing anything async
+      const shouldTrigger = shiftPressed && !otherKeyPressed;
+      
+      // Reset state immediately so no further keyups can trigger it
+      shiftPressed = false;
+      otherKeyPressed = false;
+
+      if (shouldTrigger) {
+        console.debug("[Shift] Shift tap detected");
+        try {
+          await handleShiftTap();
+        } catch (err) {
+          console.error('shift extension error', err);
+        }
+      }
+    }
+  }, { capture: true });
+  
+  window.addEventListener('blur', () => {
+    shiftPressed = false;
+    otherKeyPressed = false;
+  });
 })();
