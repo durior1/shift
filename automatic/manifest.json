@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Shift: Fix Hebrew/English keyboard mistakes",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Typing English, getting Hebrish (Eמעךןדי)? Select, type <shift>, FIXED!\nהקלדתם עברית וקיבלתם אנגלית? סמנו את הטקסט, הקישו שיפט ונתקן",
   "content_scripts": [
     {
