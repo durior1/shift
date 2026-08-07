@@ -1,7 +1,9 @@
 (() => {
   const undoStore = new Map();
+  const SHIFT_LONG_PRESS_MS = 500;
   let shiftPressed = false;
   let otherKeyPressed = false;
+  let shiftPressStartTime = null;
 
   function genId() {
     return 'shift-' + Math.random().toString(36).slice(2, 9);
@@ -242,22 +244,43 @@
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Shift') {
-      shiftPressed = true;
-      otherKeyPressed = false;
+      if (!shiftPressed) {
+        shiftPressed = true;
+        otherKeyPressed = false;
+        shiftPressStartTime = Date.now();
+      }
+    } else if (shiftPressed && (e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta')) {
+      otherKeyPressed = true;
     } else if (shiftPressed) {
+      otherKeyPressed = true;
+    }
+  }, { capture: true });
+
+  window.addEventListener('mousedown', () => {
+    if (shiftPressed) {
       otherKeyPressed = true;
     }
   }, { capture: true });
 
   window.addEventListener('keyup', async (e) => {
     if (e.key === 'Shift' && shiftPressed) {
-      if (!otherKeyPressed) {
+      const pressDuration = shiftPressStartTime === null ? 0 : Date.now() - shiftPressStartTime;
+      const shouldTrigger = !otherKeyPressed && pressDuration <= SHIFT_LONG_PRESS_MS;
 
-        handleShiftTap().catch(err => console.error('shift extension error', err));
-      }
       shiftPressed = false;
       otherKeyPressed = false;
+      shiftPressStartTime = null;
+
+      if (shouldTrigger) {
+        handleShiftTap().catch(err => console.error('shift extension error', err));
+      }
     }
   }, { capture: true });
+
+  window.addEventListener('blur', () => {
+    shiftPressed = false;
+    otherKeyPressed = false;
+    shiftPressStartTime = null;
+  });
 
 })();

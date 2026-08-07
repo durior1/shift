@@ -1,7 +1,9 @@
 (() => {
   const undoStore = new Map();
+  const SHIFT_LONG_PRESS_MS = 500;
   let shiftPressed = false;
   let otherKeyPressed = false;
+  let shiftPressStartTime = null;
 
   function genId() {
     return 'shift-' + Math.random().toString(36).slice(2, 9);
@@ -203,8 +205,11 @@
       if (!shiftPressed) {
         shiftPressed = true;
         otherKeyPressed = false;
+        shiftPressStartTime = Date.now();
         console.debug("[Shift] Key down");
       }
+    } else if (shiftPressed && (e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta')) {
+      otherKeyPressed = true;
     } else if (shiftPressed) {
       otherKeyPressed = true;
     }
@@ -219,12 +224,13 @@
 
   window.addEventListener('keyup', async (e) => {
     if (e.key === 'Shift') {
-      // Capture the state immediately before doing anything async
-      const shouldTrigger = shiftPressed && !otherKeyPressed;
-      
+      const pressDuration = shiftPressStartTime === null ? 0 : Date.now() - shiftPressStartTime;
+      const shouldTrigger = shiftPressed && !otherKeyPressed && pressDuration <= SHIFT_LONG_PRESS_MS;
+
       // Reset state immediately so no further keyups can trigger it
       shiftPressed = false;
       otherKeyPressed = false;
+      shiftPressStartTime = null;
 
       if (shouldTrigger) {
         console.debug("[Shift] Shift tap detected");
@@ -240,5 +246,6 @@
   window.addEventListener('blur', () => {
     shiftPressed = false;
     otherKeyPressed = false;
+    shiftPressStartTime = null;
   });
 })();
